@@ -1,12 +1,7 @@
-import turtle
-
-screen = turtle.Screen()
-
 """
 Mouse Handler
 """
-# don't worry about this, I haven't found anything to use it for
-# Honestly this is just a useful tkinter mouse handler.
+
 class MouseHandler:
     # Make  the variables to be referenced
     x, y = 0, 0
@@ -26,15 +21,4 @@ class MouseHandler:
         self.canvas = canvas
         self.canvas.bind("<Motion>", self._updatePos)
 
-def printClick(x,y):
-    print("CLICKED",x,y)
 
-def printPos():
-    print(mickey.x,mickey.y)
-    screen.ontimer(printPos, 100)
-
-mickey = MouseHandler(screen.getcanvas())
-
-screen.onclick(printClick)
-printPos()
-screen.mainloop()
