@@ -2,6 +2,9 @@
 Mouse Handler
 """
 
+# ? Honestly, This may not be nessecarry, and if it is, it may be misplacced.
+# ? If someone is using this, it should be part of their own code, and not part of the main program.
+
 class MouseHandler:
     # Make  the variables to be referenced
     x, y = 0, 0
