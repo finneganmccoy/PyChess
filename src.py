@@ -8,8 +8,8 @@ import sys
 def fetchRenderers():
     renderersPath = __file__.replace("src.py", "renderers")
 
-    renerers = os.listdir(renderersPath)
-    return renerers
+    renderers = os.listdir(renderersPath)
+    return renderers
 
 def chooseRenderer():
     # TODO rewrite this as an interactable menu rather than input()
