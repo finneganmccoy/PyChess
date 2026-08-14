@@ -1,5 +1,5 @@
 '''This is where some classes are stored. Both the board and the pieces themselves should have a copy of their location
-TODO: Figure out where to use format() function with "index" parameter'''
+TODO: Create more pieces'''
 
 def format(coords, form="coordinates"):
     # The following lines just format the input into coordinate form. Feel free to change the structure; this may not be optimal
