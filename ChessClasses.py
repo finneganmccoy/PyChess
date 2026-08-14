@@ -2,7 +2,6 @@
 TODO: Create more pieces'''
 
 def format(coords, form="coordinates"):
-    # The following lines just format the input into coordinate form. Feel free to change the structure; this may not be optimal
     coords = list(coords)
     coords[0],coords[1] = str(coords[0]), str(coords[1])
     if len(coords) == 2:
@@ -12,6 +11,7 @@ def format(coords, form="coordinates"):
                     pass
                 else: raise Exception("No inputs outside of 01234567")
             except ValueError:
+                # this part is for intaking letters in the input. I have decided to standardise all coordinates in index form (a1 = [0,0]), so this is no longer necessary. Delete it?
                 if coords[i] in "abcdefgh":
                     coords = list(str("abcdefgh".index(coords[i])) + coords[1-i])
                 else: raise Exception("No inputs outside of abcdefgh")
@@ -19,6 +19,7 @@ def format(coords, form="coordinates"):
 
     coords[0] = int(coords[0])
     coords[1] = int(coords[1])
+    # optional second parameter allows you to make the output have +1 or -1 coordinates. Might be useful somewhere.
     if form=="-1":
         coords[0] -= 1
         coords[1] -= 1
@@ -33,14 +34,11 @@ class position:
         self.coordinates = None
     def change(self, newPosition):
         newPosition = format(newPosition)
-        bobject.squares[newPosition[0]][newPosition[1]] = bobject.squares[self.coordinates[0]][self.coordinates[1]]
+        bobject.squares[newPosition[0]][newPosition[1]] = self
         bobject.squares[self.coordinates[0]][self.coordinates[1]] = None
         self.coordinates = newPosition
         self.notation = "abcdefgh"[self.coordinates[0]] + str(self.coordinates[1]+1)
-        '''
-        if bobject.squares[newPosition[0]][newPosition[1]].color != self.color:
-            scoreboard.add(bobject.squares[newPosition[0]][newPosition[0]].materialPoints, self.color)
-        '''
+        # this function should also add scoreboard points to the capturing team
 
 # this is the parent class for pieces
 class piece:
@@ -52,12 +50,12 @@ class piece:
         self.moves = []
 
 
-
 class knight(piece):
     def __init__(self, color, startSquare):
         super().__init__(color, startSquare)
         self.materialPoints = 3
         bobject.squares[startSquare[0]][startSquare[0]] = self
+    # all pieces need findMoves() to and a moves list. findMoves() will be different for every piece
     def findMoves(self):
         self.moves = []
         relativeCoords = [2,1]
@@ -81,7 +79,6 @@ class board:
             self.squares.append([])
             for o in range(8):
                 self.squares[i].append(None)
-        
     def occupationCheck(self, target):
         try:
             target = format(target)
@@ -93,15 +90,5 @@ class board:
         else:
             return self.squares[target[0]][target[1]].color
 
+# I have referenced the board object as "bobject" everywhere in the code. If the name needs to change, the references should also change
 bobject = board()
-
-kn = knight("white", [1,1])
-print(kn.position.coordinates, kn.position.notation,"\n")
-print(bobject.squares, "\n")
-kn.position.change([2,4])
-
-print(kn.position.coordinates, kn.position.notation, "\n")
-print(bobject.squares,"\n")
-
-kn.findMoves()
-print(kn.moves)
