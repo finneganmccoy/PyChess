@@ -6,15 +6,9 @@ def format(coords, form="coordinates"):
     coords[0],coords[1] = str(coords[0]), str(coords[1])
     if len(coords) == 2:
         for i in range(len(coords)):
-            try:
-                if int(coords[i]) <= 7 and int(coords[i]) >= 0:
-                    pass
-                else: raise Exception("No inputs outside of 01234567")
-            except ValueError:
-                # this part is for intaking letters in the input. I have decided to standardise all coordinates in index form (a1 = [0,0]), so this is no longer necessary. Delete it?
-                if coords[i] in "abcdefgh":
-                    coords = list(str("abcdefgh".index(coords[i])) + coords[1-i])
-                else: raise Exception("No inputs outside of abcdefgh")
+            if int(coords[i]) <= 7 and int(coords[i]) >= 0:
+                pass
+            else: raise Exception("No inputs outside of 01234567")
     else: raise Exception("Input must be 2 characters")
 
     coords[0] = int(coords[0])
@@ -25,6 +19,9 @@ def format(coords, form="coordinates"):
         coords[1] -= 1
     elif form=="+1":
         coords[0] += 1
+        coords[1] += 1
+    elif form=="notation":
+        coords[0] = "abcdefgh"[coords[0]]
         coords[1] += 1
     return coords
 
@@ -54,23 +51,50 @@ class knight(piece):
     def __init__(self, color, startSquare):
         super().__init__(color, startSquare)
         self.materialPoints = 3
-        bobject.squares[startSquare[0]][startSquare[0]] = self
+        bobject.squares[startSquare[0]][startSquare[1]] = self
     # all pieces need findMoves() to and a moves list. findMoves() will be different for every piece
     def findMoves(self):
         self.moves = []
         relativeCoords = [2,1]
         currentCoords = self.position.coordinates
         moveAttempt = []
-        for i in range(2):
-            for i in range(2):
-                for i in range(2):
+        for _ in range(2):
+            for _ in range(2):
+                for _ in range(2):
                     moveAttempt = [currentCoords[0] + relativeCoords[0], currentCoords[1] + relativeCoords[1]]
                     if bobject.occupationCheck(moveAttempt) != self.color and bobject.occupationCheck(moveAttempt) != "Out of bounds":
                         self.moves.append(moveAttempt)
                     relativeCoords[0] *= -1
                 relativeCoords[1] *= -1
             relativeCoords.reverse()
-            
+
+class bishop(piece):
+    def __init__(self, color, startSquare):
+        super().__init__(color, startSquare)
+        self.materialPoints = 3
+        bobject.squares[startSquare[0]][startSquare[1]] = self
+    def findMoves(self):
+        self.moves = []
+        relativeCoords = [1,1]
+        currentCoords = self.position.coordinates
+        moveAttempt = []
+        for _ in range(2):
+            for i in range(2):
+                # invert the direction of move attempts only if we are in the right part of the cycle
+                if i == 1:
+                    relativeCoords[0] *= -1
+                moveAttempt = [currentCoords[0] + relativeCoords[0], currentCoords[1] + relativeCoords[1]]
+                while bobject.occupationCheck(moveAttempt) != self.color:
+                    if bobject.occupationCheck(moveAttempt) == "Out of bounds":
+                        break
+                    # store a copy of moveAttempt in self.moves
+                    self.moves.append(moveAttempt[:])
+                    if bobject.occupationCheck(moveAttempt) != "Empty":
+                        break
+                    # change the moveAttempt to the next square
+                    moveAttempt[0] += relativeCoords[0]
+                    moveAttempt[1] += relativeCoords[1]
+            relativeCoords.reverse()
 
 class board:
     def __init__(self):
@@ -83,7 +107,7 @@ class board:
         try:
             target = format(target)
         except Exception as e:
-            if str(e) == ("No inputs outside of abcdefgh"):
+            if str(e) == ("No inputs outside of 01234567"):
                 return "Out of bounds"
         if self.squares[target[0]][target[1]] == None:
             return "Empty"
