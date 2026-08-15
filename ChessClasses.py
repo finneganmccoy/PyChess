@@ -26,22 +26,23 @@ def format(coords, form="coordinates"):
     return coords
 
 class position:
-    def __init__(self):
-        self.notation = None
+    def __init__(self, parent):
         self.coordinates = None
+        self.parentPiece = parent
     def change(self, newPosition):
         newPosition = format(newPosition)
-        bobject.squares[newPosition[0]][newPosition[1]] = self
         bobject.squares[self.coordinates[0]][self.coordinates[1]] = None
+        bobject.squares[newPosition[0]][newPosition[1]] = self.parentPiece
         self.coordinates = newPosition
-        self.notation = "abcdefgh"[self.coordinates[0]] + str(self.coordinates[1]+1)
+        # considering taking the following line out because of the existence of the updateAll() function
+        self.parentPiece.findMoves()
         # this function should also add scoreboard points to the capturing team
 
 # this is the parent class for pieces
 class piece:
     def __init__(self, color, startSquare):
         self.color = color
-        self.position = position()
+        self.position = position(self)
         self.position.coordinates = format(startSquare)
         self.materialPoints = 0
         self.moves = []
@@ -80,7 +81,77 @@ class bishop(piece):
         moveAttempt = []
         for _ in range(2):
             for i in range(2):
-                # invert the direction of move attempts only if we are in the right part of the cycle
+                # invert the direction of move attempts only if we are in the second iteration
+                if i == 1:
+                    relativeCoords[0] *= -1
+                moveAttempt = [currentCoords[0] + relativeCoords[0], currentCoords[1] + relativeCoords[1]]
+                while bobject.occupationCheck(moveAttempt) != self.color:
+                    if bobject.occupationCheck(moveAttempt) == "Out of bounds":
+                        break
+                    # store a copy of moveAttempt in self.moves
+                    self.moves.append(moveAttempt[:])
+                    if bobject.occupationCheck(moveAttempt) != "Empty":
+                        break
+                    # change the moveAttempt to the next square
+                    moveAttempt[0] += relativeCoords[0]
+                    moveAttempt[1] += relativeCoords[1]
+            relativeCoords.reverse()
+
+class rook(piece):
+    def __init__(self, color, startSquare):
+        super().__init__(color, startSquare)
+        self.materialPoints = 5
+        bobject.squares[startSquare[0]][startSquare[1]] = self
+    def findMoves(self):
+        self.moves = []
+        relativeCoords = [1,0]
+        currentCoords = self.position.coordinates
+        moveAttempt = []
+        for _ in range(2):
+            for _ in range(2):
+                moveAttempt = [currentCoords[0] + relativeCoords[0], currentCoords[1] + relativeCoords[1]]
+                while bobject.occupationCheck(moveAttempt) != self.color:
+                    if bobject.occupationCheck(moveAttempt) == "Out of bounds":
+                        break
+                    self.moves.append(moveAttempt[:])
+                    if bobject.occupationCheck(moveAttempt) != "Empty":
+                        break
+                    moveAttempt[0] += relativeCoords[0]
+                    moveAttempt[1] += relativeCoords[1]
+                relativeCoords[0] *= -1
+                relativeCoords[1] *= -1
+            relativeCoords.reverse()
+
+class queen(piece):
+    def __init__(self, color, startSquare):
+        super().__init__(color, startSquare)
+        self.materialPoints = 5
+        bobject.squares[startSquare[0]][startSquare[1]] = self
+    def findMoves(self):
+        self.moves = []
+        relativeCoords = [1,0]
+        currentCoords = self.position.coordinates
+        moveAttempt = []
+        for _ in range(2):
+            for _ in range(2):
+                moveAttempt = [currentCoords[0] + relativeCoords[0], currentCoords[1] + relativeCoords[1]]
+                while bobject.occupationCheck(moveAttempt) != self.color:
+                    if bobject.occupationCheck(moveAttempt) == "Out of bounds":
+                        break
+                    self.moves.append(moveAttempt[:])
+                    if bobject.occupationCheck(moveAttempt) != "Empty":
+                        break
+                    moveAttempt[0] += relativeCoords[0]
+                    moveAttempt[1] += relativeCoords[1]
+                relativeCoords[0] *= -1
+                relativeCoords[1] *= -1
+            relativeCoords.reverse()
+
+        # Bishop style move check. I used ctrl+c ctrl+v. Should it be a function? I dont know that it needs to be
+        relativeCoords = [1,1]
+        for _ in range(2):
+            for i in range(2):
+                # invert the direction of move attempts only if we are in the second iteration
                 if i == 1:
                     relativeCoords[0] *= -1
                 moveAttempt = [currentCoords[0] + relativeCoords[0], currentCoords[1] + relativeCoords[1]]
@@ -113,6 +184,24 @@ class board:
             return "Empty"
         else:
             return self.squares[target[0]][target[1]].color
+    def updateAll(self):
+        for i in range(len(self.squares)):
+            for o in self.squares[i]:
+                if o != None:
+                    o.findMoves()
 
 # I have referenced the board object as "bobject" everywhere in the code. If the name needs to change, the references should also change
 bobject = board()
+
+queen("white", [3,4])
+knight("black", [1,2])
+queen("black", [6, 4])
+bishop("white", [3,7])
+bobject.updateAll()
+
+for move in bobject.squares[3][4].moves:
+    print(format(move, "notation"))
+print(len(bobject.squares[3][4].moves))
+for move in bobject.squares[1][2].moves:
+    print(format(move, "notation"))
+print(len(bobject.squares[1][2].moves))
