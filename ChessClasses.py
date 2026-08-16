@@ -9,6 +9,9 @@ def format(coords, form="coordinates"):
             if int(coords[i]) <= 7 and int(coords[i]) >= 0:
                 pass
             else: raise Exception("No inputs outside of 01234567")
+            if int(coords[i]) <= 7 and int(coords[i]) >= 0:
+                pass
+            else: raise Exception("No inputs outside of 01234567")
     else: raise Exception("Input must be 2 characters")
 
     coords[0] = int(coords[0])
@@ -19,6 +22,9 @@ def format(coords, form="coordinates"):
         coords[1] -= 1
     elif form=="+1":
         coords[0] += 1
+        coords[1] += 1
+    elif form=="notation":
+        coords[0] = "abcdefgh"[coords[0]]
         coords[1] += 1
     elif form=="notation":
         coords[0] = "abcdefgh"[coords[0]]
@@ -123,6 +129,7 @@ class knight(piece):
     def __init__(self, color, startSquare):
         super().__init__(color, startSquare)
         self.materialPoints = 3
+        bobject.squares[startSquare[0]][startSquare[1]] = self
         bobject.squares[startSquare[0]][startSquare[1]] = self
     # all pieces need findMoves() to and a moves list. findMoves() will be different for every piece
     def findMoves(self):
