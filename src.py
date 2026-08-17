@@ -24,7 +24,7 @@ def chooseRenderer():
     if 0 <= choice < len(renderers):
         selected_renderer = renderers[choice]
         print(f"You selected: {selected_renderer}")
-        return str(renderersPath + "\\" + selected_renderer)
+        return selected_renderer
     else:
         print("Invalid selection. Please try again.")
         return chooseRenderer()
@@ -34,7 +34,10 @@ def startup():
     print("Welcome to PyChess")
 
     renderer = chooseRenderer()
-    subprocess.run([sys.executable, renderer])
+    renderers_path = os.path.join(os.path.dirname(__file__), "renderers")
+    sys.path.insert(0, os.path.abspath(renderers_path))
+    __import__(renderer)
+
 
 if __name__ == "__main__":
     startup()
