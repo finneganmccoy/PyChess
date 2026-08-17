@@ -39,7 +39,6 @@ class position:
         newPosition = format(newPosition)
         oldPosition = format([self.coordinates[0], self.coordinates[1]])
         wasInSquare = bobject.squares[newPosition[0]][newPosition[1]]
-
         if not(newPosition in self.parentPiece.moves):
             return "Failure"
         self.coordinates = newPosition
@@ -277,11 +276,32 @@ class board:
         else:
             return "Empty"
 
+    def boardSetup(self):
+        # setup white
+        for i in range(8):
+            pawn("white", [i,1])
+        rook("white", [0,0])
+        knight("white", [1,0])
+        bishop("white", [2,0])
+        queen("white", [3,0])
+        king("white", [4,0])
+        bishop("white", [5,0])
+        knight("white", [6,0])
+        rook("white", [7,0])
+
+        # setup black
+        for i in range(8):
+            pawn("black", [i,6])
+        rook("black", [0,7])
+        knight("black", [1,7])
+        bishop("black", [2,7])
+        queen("black", [3,7])
+        king("black", [4,7])
+        bishop("black", [5,7])
+        knight("black", [6,7])
+        rook("black", [7,7])
+        self.updateAll()
+
 # I have referenced the board object as "bobject" everywhere in the code. If the name needs to change, the references should also change
 bobject = board()
-p = pawn("white", [1,1])
-p2 = pawn("black", [2,2])
-bobject.updateAll()
-
-print(p.moves)
-print(p2.moves)
+bobject.boardSetup()
