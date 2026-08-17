@@ -205,23 +205,34 @@ class pawn(piece):
     def findMoves(self):
         self.moves = []
         currentCoords = self.position.coordinates
-        relativeCoords = [1,1]
-        moveAttempt = []
 
-        # check diagonal squares
-        for _ in range(2):
-            moveAttempt = [currentCoords[0]+relativeCoords[0], currentCoords[1]+relativeCoords[1]]
-            if bobject.colorCheck(moveAttempt) != self.color and bobject.colorCheck(moveAttempt) != "Empty" and bobject.colorCheck(moveAttempt) != "Out of bounds":
-                self.moves.append(moveAttempt[:])
-            relativeCoords[0] *= -1
-
+        if self.color == "white":
+            moveAttempt = [currentCoords[0], currentCoords[1]+1]
+        else:
+            moveAttempt = [currentCoords[0], currentCoords[1]-1]
         # check forward squares
-        moveAttempt = [currentCoords[0], currentCoords[1]+1]
-        if bobject.colorCheck(moveAttempt) == "Empty":
+        if bobject.colorCheck(moveAttempt) == "Empty" and bobject.colorCheck(moveAttempt) != "Out of bounds":
             self.moves.append(moveAttempt[:])
-            moveAttempt[1] += 1
-            if bobject.colorCheck(moveAttempt) == "Empty" and self.hasMoved == False:
+
+            if self.color == "white":
+                moveAttempt = [currentCoords[0], currentCoords[1]+2]
+            else:moveAttempt = [currentCoords[0], currentCoords[1]-2]
+            if bobject.colorCheck(moveAttempt) == "Empty" and self.hasMoved == False and bobject.colorCheck(moveAttempt) != "Out of bounds":
                 self.moves.append(moveAttempt[:])
+
+        if self.color == "white":
+            moveAttempt[1] = currentCoords[1]+1
+        else:
+            moveAttempt[1] = currentCoords[1]-1
+        # check diagonal squares
+        moveAttempt[0] = currentCoords[0]+1
+        if bobject.colorCheck(moveAttempt) != "Empty" and bobject.colorCheck(moveAttempt) != self.color and bobject.colorCheck(moveAttempt) != "Out of bounds":
+            self.moves.append(moveAttempt[:])
+
+        moveAttempt[0] = currentCoords[0]-1
+        if bobject.colorCheck(moveAttempt) != "Empty" and bobject.colorCheck(moveAttempt) != self.color and bobject.colorCheck(moveAttempt) != "Out of Bounds":
+            self.moves.append(moveAttempt[:])
+        
 
 class board:
     def __init__(self):
@@ -268,3 +279,9 @@ class board:
 
 # I have referenced the board object as "bobject" everywhere in the code. If the name needs to change, the references should also change
 bobject = board()
+p = pawn("white", [1,1])
+p2 = pawn("black", [2,2])
+bobject.updateAll()
+
+print(p.moves)
+print(p2.moves)
