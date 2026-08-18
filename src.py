@@ -2,6 +2,7 @@ import os
 import sys
 sys.dont_write_bytecode = True 
 import importlib.util
+from ChessClasses import *
 # This File is where the execution originates from
 # It uses a terminal menu to select which renderer to use
 
@@ -45,6 +46,19 @@ def startup():
     # equivalent of import but can take in file paths
     spec.loader.exec_module(renderer)
     # AI code
+
+def gameloop():
+
+    bobject = Board()
+    bobject.boardSetup()
+
+    running = True
+
+    while running:
+        if input("end?") == "y":
+            running = False
+
+
 if __name__ == "__main__":
     startup()
-    renderer.fun()
+    gameloop()

@@ -1,6 +1,10 @@
 '''This is where some classes are stored. Both the board and the pieces themselves should have a copy of their location
 TODO: Create more pieces'''
 
+"""
+FYI, it's convention to name classes with a capital letter at the start of each word, like this: "MyClass".
+"""
+
 def format(coords, form="coordinates"):
     coords = list(coords)
     coords[0],coords[1] = str(coords[0]), str(coords[1])
@@ -31,7 +35,7 @@ def format(coords, form="coordinates"):
         coords[1] += 1
     return coords
 
-class position:
+class Position:
     def __init__(self, parent, startSquare):
         self.coordinates = startSquare
         self.parentPiece = parent
@@ -58,13 +62,15 @@ class position:
         # this function should also add scoreboard points to the capturing team
 
 # this is the parent class for pieces
-class piece:
+# todo Could you refactor this so that the peice defines it's ow movement rather than the moves being pre defined in the parent class? This would make it easier to add new pieces
+class Piece:
     def __init__(self, color, startSquare):
         self.color = color
         self.hasMoved = False
-        self.position = position(self, format(startSquare))
+        self.position = Position(self, format(startSquare))
         self.materialPoints = 0
         self.moves = []
+
     def bishopMoves(self):
         moves = []
         relativeCoords = [1,1]
@@ -88,6 +94,7 @@ class piece:
                     moveAttempt[1] += relativeCoords[1]
             relativeCoords.reverse()
         return moves
+
     def knightMoves(self):
         moves = []
         relativeCoords = [2,1]
@@ -103,6 +110,7 @@ class piece:
                 relativeCoords[1] *= -1
             relativeCoords.reverse()
         return moves
+
     def rookMoves(self):
         moves = []
         relativeCoords = [1,0]
@@ -124,7 +132,7 @@ class piece:
             relativeCoords.reverse()
         return moves
 
-class knight(piece):
+class Knight(Piece):
     def __init__(self, color, startSquare):
         super().__init__(color, startSquare)
         self.materialPoints = 3
@@ -134,7 +142,7 @@ class knight(piece):
     def findMoves(self):
         self.moves = self.knightMoves()
 
-class bishop(piece):
+class Bishop(Piece):
     def __init__(self, color, startSquare):
         super().__init__(color, startSquare)
         self.materialPoints = 3
@@ -142,7 +150,7 @@ class bishop(piece):
     def findMoves(self):
         self.moves = self.bishopMoves()
 
-class rook(piece):
+class Rook(Piece):
     def __init__(self, color, startSquare):
         super().__init__(color, startSquare)
         self.materialPoints = 5
@@ -150,7 +158,7 @@ class rook(piece):
     def findMoves(self):
         self.moves = self.rookMoves()
 
-class queen(piece):
+class Queen(Piece):
     def __init__(self, color, startSquare):
         super().__init__(color, startSquare)
         self.materialPoints = 5
@@ -161,7 +169,7 @@ class queen(piece):
         for i in lines:
             self.moves.append(i)
 
-class king(piece):
+class King(Piece):
     def __init__(self, color, startSquare):
         super().__init__(color, startSquare)
         self.materialPoints = 1
@@ -196,7 +204,7 @@ class king(piece):
         
         bobject.kings.append(self)
 
-class pawn(piece):
+class Pawn(Piece):
     def __init__(self, color, startSquare):
         super().__init__(color, startSquare)
         self.materialPoints = 1
@@ -233,7 +241,7 @@ class pawn(piece):
             self.moves.append(moveAttempt[:])
         
 
-class board:
+class Board:
     def __init__(self):
         self.squares = []
         for i in range(8):
@@ -279,29 +287,29 @@ class board:
     def boardSetup(self):
         # setup white
         for i in range(8):
-            pawn("white", [i,1])
-        rook("white", [0,0])
-        knight("white", [1,0])
-        bishop("white", [2,0])
-        queen("white", [3,0])
-        king("white", [4,0])
-        bishop("white", [5,0])
-        knight("white", [6,0])
-        rook("white", [7,0])
+            Pawn("white", [i,1])
+        Rook("white", [0,0])
+        Knight("white", [1,0])
+        Bishop("white", [2,0])
+        Queen("white", [3,0])
+        King("white", [4,0])
+        Bishop("white", [5,0])
+        Knight("white", [6,0])
+        Rook("white", [7,0])
 
         # setup black
         for i in range(8):
-            pawn("black", [i,6])
-        rook("black", [0,7])
-        knight("black", [1,7])
-        bishop("black", [2,7])
-        queen("black", [3,7])
-        king("black", [4,7])
-        bishop("black", [5,7])
-        knight("black", [6,7])
-        rook("black", [7,7])
+            Pawn("black", [i,6])
+        Rook("black", [0,7])
+        Knight("black", [1,7])
+        Bishop("black", [2,7])
+        Queen("black", [3,7])
+        King("black", [4,7])
+        Bishop("black", [5,7])
+        Knight("black", [6,7])
+        Rook("black", [7,7])
         self.updateAll()
 
 # I have referenced the board object as "bobject" everywhere in the code. If the name needs to change, the references should also change
-bobject = board()
+bobject = Board()
 bobject.boardSetup()
