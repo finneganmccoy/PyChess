@@ -49,9 +49,9 @@ def startup():
 
 def gameloop():
 
-    bobject = Board()
-    bobject.boardSetup()
-
+    board = Board()
+    board.boardSetup()
+    print(board.squares)
     running = True
 
     while running:
