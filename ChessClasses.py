@@ -36,7 +36,8 @@ def format(coords, form="coordinates"):
     return coords
 
 class Position:
-    def __init__(self, parent, startSquare):
+    def __init__(self, parent, startSquare, bobject):
+        self.bobject = bobject
         self.coordinates = startSquare
         self.parentPiece = parent
     def change(self, newPosition):
@@ -66,11 +67,11 @@ class Position:
 class Piece:
     def __init__(self, color, startSquare, bobject):
         self.color = color
+        self.bobject = bobject
         self.hasMoved = False
-        self.position = Position(self, format(startSquare))
+        self.position = Position(self, format(startSquare), self.bobject)
         self.materialPoints = 0
         self.moves = []
-        self.bobject = bobject
 
     def bishopMoves(self):
         moves = []

@@ -51,6 +51,7 @@ def gameloop():
 
     board = Board()
     board.boardSetup()
+    board.squares[1][0].position.change([2,2])
     print(board.squares)
     running = True
 
