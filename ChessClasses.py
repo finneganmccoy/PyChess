@@ -73,7 +73,35 @@ class Piece:
         self.materialPoints = 0
         self.moves = []
 
-    def bishopMoves(self):
+class Knight(Piece):
+    def __init__(self, color, startSquare, bobject):
+        super().__init__(color, startSquare, bobject)
+        self.materialPoints = 3
+        self.bobject.squares[startSquare[0]][startSquare[1]] = self
+        self.bobject.squares[startSquare[0]][startSquare[1]] = self
+    # all pieces need findMoves() to and a moves list. findMoves() will be different for every piece
+    def findMoves(self):
+        moves = []
+        relativeCoords = [2,1]
+        currentCoords = self.position.coordinates
+        moveAttempt = []
+        for _ in range(2):
+            for _ in range(2):
+                for _ in range(2):
+                    moveAttempt = [currentCoords[0] + relativeCoords[0], currentCoords[1] + relativeCoords[1]]
+                    if self.bobject.colorCheck(moveAttempt) != self.color and self.bobject.colorCheck(moveAttempt) != "Out of bounds":
+                        moves.append(moveAttempt)
+                    relativeCoords[0] *= -1
+                relativeCoords[1] *= -1
+            relativeCoords.reverse()
+        return moves
+
+class Bishop(Piece):
+    def __init__(self, color, startSquare, bobject):
+        super().__init__(color, startSquare, bobject)
+        self.materialPoints = 3
+        self.bobject.squares[startSquare[0]][startSquare[1]] = self
+    def findMoves(self):
         moves = []
         relativeCoords = [1,1]
         currentCoords = self.position.coordinates
@@ -97,23 +125,12 @@ class Piece:
             relativeCoords.reverse()
         return moves
 
-    def knightMoves(self):
-        moves = []
-        relativeCoords = [2,1]
-        currentCoords = self.position.coordinates
-        moveAttempt = []
-        for _ in range(2):
-            for _ in range(2):
-                for _ in range(2):
-                    moveAttempt = [currentCoords[0] + relativeCoords[0], currentCoords[1] + relativeCoords[1]]
-                    if self.bobject.colorCheck(moveAttempt) != self.color and self.bobject.colorCheck(moveAttempt) != "Out of bounds":
-                        moves.append(moveAttempt)
-                    relativeCoords[0] *= -1
-                relativeCoords[1] *= -1
-            relativeCoords.reverse()
-        return moves
-
-    def rookMoves(self):
+class Rook(Piece):
+    def __init__(self, color, startSquare, bobject):
+        super().__init__(color, startSquare, bobject)
+        self.materialPoints = 5
+        self.bobject.squares[startSquare[0]][startSquare[1]] = self
+    def findMoves(self):
         moves = []
         relativeCoords = [1,0]
         currentCoords = self.position.coordinates
@@ -134,42 +151,16 @@ class Piece:
             relativeCoords.reverse()
         return moves
 
-class Knight(Piece):
-    def __init__(self, color, startSquare, bobject):
-        super().__init__(color, startSquare, bobject)
-        self.materialPoints = 3
-        self.bobject.squares[startSquare[0]][startSquare[1]] = self
-        self.bobject.squares[startSquare[0]][startSquare[1]] = self
-    # all pieces need findMoves() to and a moves list. findMoves() will be different for every piece
-    def findMoves(self):
-        self.moves = self.knightMoves()
-
-class Bishop(Piece):
-    def __init__(self, color, startSquare, bobject):
-        super().__init__(color, startSquare, bobject)
-        self.materialPoints = 3
-        self.bobject.squares[startSquare[0]][startSquare[1]] = self
-    def findMoves(self):
-        self.moves = self.bishopMoves()
-
-class Rook(Piece):
-    def __init__(self, color, startSquare, bobject):
-        super().__init__(color, startSquare, bobject)
-        self.materialPoints = 5
-        self.bobject.squares[startSquare[0]][startSquare[1]] = self
-    def findMoves(self):
-        self.moves = self.rookMoves()
-
 class Queen(Piece):
     def __init__(self, color, startSquare, bobject):
         super().__init__(color, startSquare, bobject)
         self.materialPoints = 5
         self.bobject.squares[startSquare[0]][startSquare[1]] = self
     def findMoves(self):
-        self.moves = self.bishopMoves()
-        lines = self.rookMoves()
-        for i in lines:
-            self.moves.append(i)
+        moves = Bishop.findMoves(self)
+        for i in Rook.findMoves(self):
+            moves.append(i)
+        return moves
 
 class King(Piece):
     def __init__(self, color, startSquare, bobject):
@@ -178,14 +169,14 @@ class King(Piece):
         self.bobject.squares[startSquare[0]][startSquare[1]] = self
         self.is_in_check = False
     def findMoves(self):
-        self.moves = []
+        moves = []
         currentCoords = self.position.coordinates
         relativeCoords = [1,0]
         for _ in range(2):
             for _ in range(2):
                 moveAttempt = [currentCoords[0] + relativeCoords[0], currentCoords[1] + relativeCoords[1]]
                 if self.bobject.colorCheck(moveAttempt) != self.color and self.bobject.colorCheck(moveAttempt) != "Out of bounds":
-                    self.moves.append(moveAttempt[:])
+                    moves.append(moveAttempt[:])
                 moveAttempt[0] += relativeCoords[0]
                 moveAttempt[1] += relativeCoords[1]
                 relativeCoords[0] *= -1
@@ -199,12 +190,12 @@ class King(Piece):
                     relativeCoords[0] *= -1
                 moveAttempt = [currentCoords[0] + relativeCoords[0], currentCoords[1] + relativeCoords[1]]
                 if self.bobject.colorCheck(moveAttempt) != self.color and self.bobject.colorCheck(moveAttempt) != "Out of bounds":
-                    self.moves.append(moveAttempt[:])
+                    moves.append(moveAttempt[:])
                 moveAttempt[0] += relativeCoords[0]
                 moveAttempt[1] += relativeCoords[1]
             relativeCoords.reverse()
-        
-        self.bobject.kings.append(self)
+
+        return moves
 
 class Pawn(Piece):
     def __init__(self, color, startSquare, bobject):
@@ -212,7 +203,7 @@ class Pawn(Piece):
         self.materialPoints = 1
         self.bobject.squares[startSquare[0]][startSquare[1]] = self
     def findMoves(self):
-        self.moves = []
+        moves = []
         currentCoords = self.position.coordinates
 
         if self.color == "white":
@@ -221,13 +212,13 @@ class Pawn(Piece):
             moveAttempt = [currentCoords[0], currentCoords[1]-1]
         # check forward squares
         if self.bobject.colorCheck(moveAttempt) == "Empty" and self.bobject.colorCheck(moveAttempt) != "Out of bounds":
-            self.moves.append(moveAttempt[:])
+            moves.append(moveAttempt[:])
 
             if self.color == "white":
                 moveAttempt = [currentCoords[0], currentCoords[1]+2]
             else:moveAttempt = [currentCoords[0], currentCoords[1]-2]
             if self.bobject.colorCheck(moveAttempt) == "Empty" and self.hasMoved == False and self.bobject.colorCheck(moveAttempt) != "Out of bounds":
-                self.moves.append(moveAttempt[:])
+                moves.append(moveAttempt[:])
 
         if self.color == "white":
             moveAttempt[1] = currentCoords[1]+1
@@ -236,11 +227,13 @@ class Pawn(Piece):
         # check diagonal squares
         moveAttempt[0] = currentCoords[0]+1
         if self.bobject.colorCheck(moveAttempt) != "Empty" and self.bobject.colorCheck(moveAttempt) != self.color and self.bobject.colorCheck(moveAttempt) != "Out of bounds":
-            self.moves.append(moveAttempt[:])
+            moves.append(moveAttempt[:])
 
         moveAttempt[0] = currentCoords[0]-1
         if self.bobject.colorCheck(moveAttempt) != "Empty" and self.bobject.colorCheck(moveAttempt) != self.color and self.bobject.colorCheck(moveAttempt) != "Out of Bounds":
-            self.moves.append(moveAttempt[:])
+            moves.append(moveAttempt[:])
+        
+        return moves
         
 
 class Board:
@@ -266,7 +259,9 @@ class Board:
         for i in range(len(self.squares)):
             for o in self.squares[i]:
                 if o != None:
-                    o.findMoves()
+                    o.moves = o.findMoves()
+                    if type(o).__name__ == "king":
+                        self.kings.append(o)
 
         for i in range(len(self.squares)):
             for o in self.squares[i]:
