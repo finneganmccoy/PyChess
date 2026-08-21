@@ -257,6 +257,9 @@ class Board:
     def updateAll(self):
         self.kings = []
 
+        for k in self.kings:
+            k.is_in_check = False
+
         for i in range(len(self.squares)):
             for o in self.squares[i]:
                 if o != None:
@@ -268,7 +271,6 @@ class Board:
             for o in self.squares[i]:
                 if o != None:
                     for k in self.kings:
-                        k.is_in_check = False
                         if k.position.coordinates in o.moves:
                             if k.color != o.color:
                                 k.is_in_check =True
