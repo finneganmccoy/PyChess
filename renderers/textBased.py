@@ -5,5 +5,5 @@ def draw(board):
                 if board.squares[x][7-y] != None:
                     xline.append(board.squares[x][7-y].color[0].upper()  +  type(board.squares[x][7-y]).__name__[0:3].lower())
                 else:
-                     xline.append(" N  ")
+                     xline.append("     ")
             print(xline,"\n")
