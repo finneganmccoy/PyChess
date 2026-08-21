@@ -1,3 +1,4 @@
+import os
 emojis = {
     "Bking": "♔",
     "Wking": "♚",
@@ -14,6 +15,10 @@ emojis = {
 }
 
 def draw(board):
+    # this line clears terminal
+    # not sure why vscode says its deprecated
+    # you can change it if you want
+    os.system("cls" if os.name == "nt" else "clear")
     for y in range(8):
             xline = []
             for x in range(8):
