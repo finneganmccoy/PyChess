@@ -51,13 +51,21 @@ def gameloop():
 
     board = Board()
     board.boardSetup()
-    board.squares[1][0].position.change([2,2])
-    print(board.squares)
+    renderer.draw(board)
     running = True
 
     while running:
-        if input("end?") == "y":
+        command = input("command: ")
+        if command == "end":
             running = False
+        # use format>  21 33  < in order to make moves
+        elif len(command) == 5 and command[2] == " ":
+            command = [int(command[0])-1,int(command[1])-1,int(command[3])-1,int(command[4])-1]
+            print(board.squares[command[0]][command[1]].position.change([command[2], command[3]]))
+            for i in board.kings:
+                print(i.color, i.is_in_check)
+            print(board.squares[3][7].moves, "<MOVES")
+        renderer.draw(board)
 
 
 if __name__ == "__main__":

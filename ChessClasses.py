@@ -45,7 +45,7 @@ class Position:
         oldPosition = format([self.coordinates[0], self.coordinates[1]])
         wasInSquare = self.bobject.squares[newPosition[0]][newPosition[1]]
         if not(newPosition in self.parentPiece.moves):
-            return "Failure"
+            return "Failure not in moves"
         self.coordinates = newPosition
         self.bobject.squares[oldPosition[0]][oldPosition[1]] = None
         self.bobject.squares[newPosition[0]][newPosition[1]] = self.parentPiece
@@ -56,7 +56,7 @@ class Position:
                 self.bobject.squares[oldPosition[0]][oldPosition[1]] = self.parentPiece
                 self.coordinates = oldPosition
                 self.bobject.updateAll()
-                return "Failure"
+                return "Failure is in check"
         self.parentPiece.hasMoved = True
         self.parentPiece.findMoves()
         return "Success"
@@ -256,17 +256,19 @@ class Board:
             return self.squares[target[0]][target[1]].color
     def updateAll(self):
         self.kings = []
+
         for i in range(len(self.squares)):
             for o in self.squares[i]:
                 if o != None:
                     o.moves = o.findMoves()
-                    if type(o).__name__ == "king":
+                    if type(o).__name__ == "King":
                         self.kings.append(o)
 
         for i in range(len(self.squares)):
             for o in self.squares[i]:
                 if o != None:
                     for k in self.kings:
+                        k.is_in_check = False
                         if k.position.coordinates in o.moves:
                             if k.color != o.color:
                                 k.is_in_check =True
@@ -306,6 +308,3 @@ class Board:
         Knight("black", [6,7], self)
         Rook("black", [7,7], self)
         self.updateAll()
-
-
-
