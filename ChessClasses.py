@@ -30,9 +30,6 @@ def format(coords, form="coordinates"):
     elif form=="notation":
         coords[0] = "abcdefgh"[coords[0]]
         coords[1] += 1
-    elif form=="notation":
-        coords[0] = "abcdefgh"[coords[0]]
-        coords[1] += 1
     return coords
 
 class Position:
@@ -256,16 +253,15 @@ class Board:
             return self.squares[target[0]][target[1]].color
     def updateAll(self):
         self.kings = []
-
-        for k in self.kings:
-            k.is_in_check = False
-
         for i in range(len(self.squares)):
             for o in self.squares[i]:
                 if o != None:
                     o.moves = o.findMoves()
                     if type(o).__name__ == "King":
                         self.kings.append(o)
+
+        for k in self.kings:
+            k.is_in_check = False
 
         for i in range(len(self.squares)):
             for o in self.squares[i]:
