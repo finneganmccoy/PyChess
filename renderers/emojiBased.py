@@ -31,4 +31,8 @@ def draw(board):
                     xline[i] = emojis[xline[i]]
                 else:
                     xline[i] = " "
-            print(xline)
+            print(8-y, xline)
+    xline = ""
+    for i in "abcdefgh":
+         xline = xline+ "    " + i
+    print(xline)

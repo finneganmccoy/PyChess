@@ -1,13 +1,15 @@
 '''This is where some classes are stored. Both the board and the pieces themselves should have a copy of their location
-TODO: Create more pieces'''
+TODO: redo format() to make it useful (and be able to input "a1" notation)'''
 
 """
 FYI, it's convention to name classes with a capital letter at the start of each word, like this: "MyClass".
 """
 
-def format(coords, form="coordinates"):
-    coords = list(coords)
-    coords[0],coords[1] = str(coords[0]), str(coords[1])
+def format(coords, form="coordinates") -> list:
+    with coords as c:
+        coords = [0,0]
+        for i in c:
+            coords[0] = i
     if len(coords) == 2:
         for i in range(len(coords)):
             if int(coords[i]) <= 7 and int(coords[i]) >= 0:
@@ -33,49 +35,47 @@ def format(coords, form="coordinates"):
     return coords
 
 class Position:
-    def __init__(self, parent, startSquare, bobject):
-        self.bobject = bobject
+    def __init__(self, parent, startSquare, board):
+        self.board = board
         self.coordinates = startSquare
         self.parentPiece = parent
     def change(self, newPosition):
-        newPosition = format(newPosition)
-        oldPosition = format([self.coordinates[0], self.coordinates[1]])
-        wasInSquare = self.bobject.squares[newPosition[0]][newPosition[1]]
+        oldPosition = [self.coordinates[0], self.coordinates[1]]
+        wasInSquare = self.board.squares[newPosition[0]][newPosition[1]]
         if not(newPosition in self.parentPiece.moves):
             return "Failure not in moves"
         self.coordinates = newPosition
-        self.bobject.squares[oldPosition[0]][oldPosition[1]] = None
-        self.bobject.squares[newPosition[0]][newPosition[1]] = self.parentPiece
-        self.bobject.updateAll()
-        for i in self.bobject.kings:
+        self.board.squares[oldPosition[0]][oldPosition[1]] = None
+        self.board.squares[newPosition[0]][newPosition[1]] = self.parentPiece
+        self.board.updateAll()
+        for i in self.board.kings:
             if i.is_in_check == True and i.color == self.parentPiece.color:
-                self.bobject.squares[newPosition[0]][newPosition[1]] = wasInSquare
-                self.bobject.squares[oldPosition[0]][oldPosition[1]] = self.parentPiece
+                self.board.squares[newPosition[0]][newPosition[1]] = wasInSquare
+                self.board.squares[oldPosition[0]][oldPosition[1]] = self.parentPiece
                 self.coordinates = oldPosition
-                self.bobject.updateAll()
+                self.board.updateAll()
                 return "Failure is in check"
         self.parentPiece.hasMoved = True
-        self.parentPiece.findMoves()
+        self.board.updateAll()
         return "Success"
         # this function should also add scoreboard points to the capturing team
 
 # this is the parent class for pieces
-# todo Could you refactor this so that the peice defines it's ow movement rather than the moves being pre defined in the parent class? This would make it easier to add new pieces
 class Piece:
-    def __init__(self, color, startSquare, bobject):
+    def __init__(self, color, startSquare, board):
         self.color = color
-        self.bobject = bobject
+        self.board = board
         self.hasMoved = False
-        self.position = Position(self, format(startSquare), self.bobject)
+        self.position = Position(self, startSquare, self.board)
         self.materialPoints = 0
         self.moves = []
 
 class Knight(Piece):
-    def __init__(self, color, startSquare, bobject):
-        super().__init__(color, startSquare, bobject)
+    def __init__(self, color, startSquare, board):
+        super().__init__(color, startSquare, board)
         self.materialPoints = 3
-        self.bobject.squares[startSquare[0]][startSquare[1]] = self
-        self.bobject.squares[startSquare[0]][startSquare[1]] = self
+        self.board.squares[startSquare[0]][startSquare[1]] = self
+        self.board.squares[startSquare[0]][startSquare[1]] = self
     # all pieces need findMoves() to and a moves list. findMoves() will be different for every piece
     def findMoves(self):
         moves = []
@@ -86,7 +86,7 @@ class Knight(Piece):
             for _ in range(2):
                 for _ in range(2):
                     moveAttempt = [currentCoords[0] + relativeCoords[0], currentCoords[1] + relativeCoords[1]]
-                    if self.bobject.colorCheck(moveAttempt) != self.color and self.bobject.colorCheck(moveAttempt) != "Out of bounds":
+                    if self.board.colorCheck(moveAttempt) != self.color and self.board.colorCheck(moveAttempt) != "Out of bounds":
                         moves.append(moveAttempt)
                     relativeCoords[0] *= -1
                 relativeCoords[1] *= -1
@@ -94,10 +94,10 @@ class Knight(Piece):
         return moves
 
 class Bishop(Piece):
-    def __init__(self, color, startSquare, bobject):
-        super().__init__(color, startSquare, bobject)
+    def __init__(self, color, startSquare, board):
+        super().__init__(color, startSquare, board)
         self.materialPoints = 3
-        self.bobject.squares[startSquare[0]][startSquare[1]] = self
+        self.board.squares[startSquare[0]][startSquare[1]] = self
     def findMoves(self):
         moves = []
         relativeCoords = [1,1]
@@ -109,12 +109,12 @@ class Bishop(Piece):
                 if i == 1:
                     relativeCoords[0] *= -1
                 moveAttempt = [currentCoords[0] + relativeCoords[0], currentCoords[1] + relativeCoords[1]]
-                while self.bobject.colorCheck(moveAttempt) != self.color:
-                    if self.bobject.colorCheck(moveAttempt) == "Out of bounds":
+                while self.board.colorCheck(moveAttempt) != self.color:
+                    if self.board.colorCheck(moveAttempt) == "Out of bounds":
                         break
                     # store a copy of moveAttempt in self.moves
                     moves.append(moveAttempt[:])
-                    if self.bobject.colorCheck(moveAttempt) != "Empty":
+                    if self.board.colorCheck(moveAttempt) != "Empty":
                         break
                     # change the moveAttempt to the next square
                     moveAttempt[0] += relativeCoords[0]
@@ -123,10 +123,10 @@ class Bishop(Piece):
         return moves
 
 class Rook(Piece):
-    def __init__(self, color, startSquare, bobject):
-        super().__init__(color, startSquare, bobject)
+    def __init__(self, color, startSquare, board):
+        super().__init__(color, startSquare, board)
         self.materialPoints = 5
-        self.bobject.squares[startSquare[0]][startSquare[1]] = self
+        self.board.squares[startSquare[0]][startSquare[1]] = self
     def findMoves(self):
         moves = []
         relativeCoords = [1,0]
@@ -135,11 +135,11 @@ class Rook(Piece):
         for _ in range(2):
             for _ in range(2):
                 moveAttempt = [currentCoords[0] + relativeCoords[0], currentCoords[1] + relativeCoords[1]]
-                while self.bobject.colorCheck(moveAttempt) != self.color:
-                    if self.bobject.colorCheck(moveAttempt) == "Out of bounds":
+                while self.board.colorCheck(moveAttempt) != self.color:
+                    if self.board.colorCheck(moveAttempt) == "Out of bounds":
                         break
                     moves.append(moveAttempt[:])
-                    if self.bobject.colorCheck(moveAttempt) != "Empty":
+                    if self.board.colorCheck(moveAttempt) != "Empty":
                         break
                     moveAttempt[0] += relativeCoords[0]
                     moveAttempt[1] += relativeCoords[1]
@@ -149,10 +149,10 @@ class Rook(Piece):
         return moves
 
 class Queen(Piece):
-    def __init__(self, color, startSquare, bobject):
-        super().__init__(color, startSquare, bobject)
+    def __init__(self, color, startSquare, board):
+        super().__init__(color, startSquare, board)
         self.materialPoints = 5
-        self.bobject.squares[startSquare[0]][startSquare[1]] = self
+        self.board.squares[startSquare[0]][startSquare[1]] = self
     def findMoves(self):
         moves = Bishop.findMoves(self)
         for i in Rook.findMoves(self):
@@ -160,10 +160,10 @@ class Queen(Piece):
         return moves
 
 class King(Piece):
-    def __init__(self, color, startSquare, bobject):
-        super().__init__(color, startSquare, bobject)
+    def __init__(self, color, startSquare, board):
+        super().__init__(color, startSquare, board)
         self.materialPoints = 1
-        self.bobject.squares[startSquare[0]][startSquare[1]] = self
+        self.board.squares[startSquare[0]][startSquare[1]] = self
         self.is_in_check = False
     def findMoves(self):
         moves = []
@@ -172,7 +172,7 @@ class King(Piece):
         for _ in range(2):
             for _ in range(2):
                 moveAttempt = [currentCoords[0] + relativeCoords[0], currentCoords[1] + relativeCoords[1]]
-                if self.bobject.colorCheck(moveAttempt) != self.color and self.bobject.colorCheck(moveAttempt) != "Out of bounds":
+                if self.board.colorCheck(moveAttempt) != self.color and self.board.colorCheck(moveAttempt) != "Out of bounds":
                     moves.append(moveAttempt[:])
                 moveAttempt[0] += relativeCoords[0]
                 moveAttempt[1] += relativeCoords[1]
@@ -186,7 +186,7 @@ class King(Piece):
                 if i == 1:
                     relativeCoords[0] *= -1
                 moveAttempt = [currentCoords[0] + relativeCoords[0], currentCoords[1] + relativeCoords[1]]
-                if self.bobject.colorCheck(moveAttempt) != self.color and self.bobject.colorCheck(moveAttempt) != "Out of bounds":
+                if self.board.colorCheck(moveAttempt) != self.color and self.board.colorCheck(moveAttempt) != "Out of bounds":
                     moves.append(moveAttempt[:])
                 moveAttempt[0] += relativeCoords[0]
                 moveAttempt[1] += relativeCoords[1]
@@ -195,10 +195,10 @@ class King(Piece):
         return moves
 
 class Pawn(Piece):
-    def __init__(self, color, startSquare, bobject):
-        super().__init__(color, startSquare, bobject)
+    def __init__(self, color, startSquare, board):
+        super().__init__(color, startSquare, board)
         self.materialPoints = 1
-        self.bobject.squares[startSquare[0]][startSquare[1]] = self
+        self.board.squares[startSquare[0]][startSquare[1]] = self
     def findMoves(self):
         moves = []
         currentCoords = self.position.coordinates
@@ -208,14 +208,15 @@ class Pawn(Piece):
         else:
             moveAttempt = [currentCoords[0], currentCoords[1]-1]
         # check forward squares
-        if self.bobject.colorCheck(moveAttempt) == "Empty" and self.bobject.colorCheck(moveAttempt) != "Out of bounds":
+        if self.board.colorCheck(moveAttempt) == "Empty" and self.board.colorCheck(moveAttempt) != "Out of bounds":
             moves.append(moveAttempt[:])
 
             if self.color == "white":
                 moveAttempt = [currentCoords[0], currentCoords[1]+2]
             else:moveAttempt = [currentCoords[0], currentCoords[1]-2]
-            if self.bobject.colorCheck(moveAttempt) == "Empty" and self.hasMoved == False and self.bobject.colorCheck(moveAttempt) != "Out of bounds":
+            if self.board.colorCheck(moveAttempt) == "Empty" and self.hasMoved == False and self.board.colorCheck(moveAttempt) != "Out of bounds":
                 moves.append(moveAttempt[:])
+
 
         if self.color == "white":
             moveAttempt[1] = currentCoords[1]+1
@@ -223,11 +224,11 @@ class Pawn(Piece):
             moveAttempt[1] = currentCoords[1]-1
         # check diagonal squares
         moveAttempt[0] = currentCoords[0]+1
-        if self.bobject.colorCheck(moveAttempt) != "Empty" and self.bobject.colorCheck(moveAttempt) != self.color and self.bobject.colorCheck(moveAttempt) != "Out of bounds":
+        if self.board.colorCheck(moveAttempt) != "Empty" and self.board.colorCheck(moveAttempt) != self.color and self.board.colorCheck(moveAttempt) != "Out of bounds":
             moves.append(moveAttempt[:])
 
         moveAttempt[0] = currentCoords[0]-1
-        if self.bobject.colorCheck(moveAttempt) != "Empty" and self.bobject.colorCheck(moveAttempt) != self.color and self.bobject.colorCheck(moveAttempt) != "Out of Bounds":
+        if self.board.colorCheck(moveAttempt) != "Empty" and self.board.colorCheck(moveAttempt) != self.color and self.board.colorCheck(moveAttempt) != "Out of Bounds":
             moves.append(moveAttempt[:])
         
         return moves
@@ -241,16 +242,6 @@ class Board:
             for o in range(8):
                 self.squares[i].append(None)
         self.kings = []
-    def colorCheck(self, target):
-        try:
-            target = format(target)
-        except Exception as e:
-            if str(e) == ("No inputs outside of 01234567"):
-                return "Out of bounds"
-        if self.squares[target[0]][target[1]] == None:
-            return "Empty"
-        else:
-            return self.squares[target[0]][target[1]].color
     def updateAll(self):
         self.kings = []
         for i in range(len(self.squares)):
@@ -270,11 +261,17 @@ class Board:
                         if k.position.coordinates in o.moves:
                             if k.color != o.color:
                                 k.is_in_check =True
+    def colorCheck(self, target):
+        for i in target:
+            if not(str(i) in "01234567"):
+                return "Out of bounds"
+        if self.squares[target[0]][target[1]] == None:
+            return "Empty"
+        else:
+            return self.squares[target[0]][target[1]].color
     def typeCheck(self, target):
-        try:
-            target = format(target)
-        except Exception as e:
-            if str(e) == ("No inputs outside of 01234567"):
+        for i in target:
+            if not(str(i) in "01234567"):
                 return "Out of bounds"
         if self.squares[target[0]][target[1]] != None:
             return type(self.squares[target[0]][target[1]]).__name__
