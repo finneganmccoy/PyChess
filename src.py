@@ -48,7 +48,7 @@ def startup():
     # AI code
 
 def gameloop():
-
+    turn = "white"
     board = Board()
     board.boardSetup()
     renderer.draw(board)
@@ -56,13 +56,16 @@ def gameloop():
 
     while running:
         command = input("command: ")
-        if command == "end":
-            running = False
-        # use format>  21 33  < in order to make moves
-        elif len(command) == 5 and command[2] == " ":
-            command = [int(command[0])-1,int(command[1])-1,int(command[3])-1,int(command[4])-1]
-            print(board.squares[command[0]][command[1]].position.change([command[2], command[3]]))
-
+        if command.lower() == "setup":
+            board.boardSetup()
+        else:
+            command = [format([command[0],command[1]] , "-1"), format([command[3],command[4]] , "-1")]
+            if board.colorCheck(command[0]) == turn:
+                if board.squares[command[0][0]][command[0][1]].position.change([command[1][0], command[1][1]]) == "Success":
+                    turn = "white" if turn == "black" else "black"
+            else:
+                print("It's not your turn!")
+            # use format>  b1 c3  < in order to make moves
         renderer.draw(board)
 
 

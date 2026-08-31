@@ -5,23 +5,14 @@ TODO: redo format() to make it useful (and be able to input "a1" notation)'''
 FYI, it's convention to name classes with a capital letter at the start of each word, like this: "MyClass".
 """
 
-def format(coords, form="coordinates") -> list:
-    with coords as c:
-        coords = [0,0]
-        for i in c:
-            coords[0] = i
-    if len(coords) == 2:
-        for i in range(len(coords)):
-            if int(coords[i]) <= 7 and int(coords[i]) >= 0:
-                pass
-            else: raise Exception("No inputs outside of 01234567")
-            if int(coords[i]) <= 7 and int(coords[i]) >= 0:
-                pass
-            else: raise Exception("No inputs outside of 01234567")
-    else: raise Exception("Input must be 2 characters")
-
-    coords[0] = int(coords[0])
-    coords[1] = int(coords[1])
+def format(coords: list, form="coordinates") -> list[int]:
+    coords = list(coords)
+    hasLetters = False
+    for i in range(len(coords)):
+        if type(coords[i]).__name__ == "str":
+            try: coords[i] = int(coords[i])
+            except ValueError:
+                coords[i] = "abcdefgh".index(coords[i])+1
     # optional second parameter allows you to make the output have +1 or -1 coordinates. Might be useful somewhere.
     if form=="-1":
         coords[0] -= 1
@@ -32,6 +23,7 @@ def format(coords, form="coordinates") -> list:
     elif form=="notation":
         coords[0] = "abcdefgh"[coords[0]]
         coords[1] += 1
+    form = "coordinates"
     return coords
 
 class Position:
@@ -244,23 +236,23 @@ class Board:
         self.kings = []
     def updateAll(self):
         self.kings = []
-        for i in range(len(self.squares)):
-            for o in self.squares[i]:
-                if o != None:
-                    o.moves = o.findMoves()
-                    if type(o).__name__ == "King":
-                        self.kings.append(o)
+        for column in range(len(self.squares)):
+            for square in self.squares[column]:
+                if square != None:
+                    square.moves = square.findMoves()
+                    if type(square).__name__ == "King":
+                        self.kings.append(square)
 
-        for k in self.kings:
-            k.is_in_check = False
+        for king in self.kings:
+            king.is_in_check = False
 
-        for i in range(len(self.squares)):
-            for o in self.squares[i]:
-                if o != None:
-                    for k in self.kings:
-                        if k.position.coordinates in o.moves:
-                            if k.color != o.color:
-                                k.is_in_check =True
+        for column in range(len(self.squares)):
+            for square in self.squares[column]:
+                if square != None:
+                    for king in self.kings:
+                        if king.position.coordinates in square.moves:
+                            if king.color != square.color:
+                                king.is_in_check =True
     def colorCheck(self, target):
         for i in target:
             if not(str(i) in "01234567"):
@@ -279,6 +271,7 @@ class Board:
             return "Empty"
 
     def boardSetup(self):
+        self.__init__()
         # setup white
         for i in range(8):
             Pawn("white", [i,1], self)
