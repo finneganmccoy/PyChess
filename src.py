@@ -66,7 +66,7 @@ def gameloop():
             else:
                 print("It's not your turn!")
             # use format>  b1 c3  < in order to make moves
-        renderer.draw(board)
+        renderer.draw(board, turn)
 
 
 if __name__ == "__main__":

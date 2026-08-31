@@ -14,12 +14,13 @@ emojis = {
     "Wpawn": "♟",
 }
 
-def draw(board):
+def draw(board, orientation="white"):
     # this line clears terminal
     # not sure why vscode says its deprecated
     # you can change it if you want
     os.system("cls" if os.name == "nt" else "clear")
     for y in range(8):
+            if orientation == "black": y = 7-y #this line is all that is required to flip board. very happy with it
             xline = []
             for x in range(8):
                 if board.squares[x][7-y] != None:
