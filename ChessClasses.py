@@ -5,7 +5,7 @@ TODO: redo format() to make it useful (and be able to input "a1" notation)'''
 FYI, it's convention to name classes with a capital letter at the start of each word, like this: "MyClass".
 """
 
-def format(coords: list, form="coordinates") -> list[int]:
+def format(coords: str, form="coordinates") -> list[int]:
     coords = list(coords)
     hasLetters = False
     for i in range(len(coords)):
@@ -32,6 +32,10 @@ class Position:
         self.coordinates = startSquare
         self.parentPiece = parent
     def change(self, newPosition):
+        for i in "abcdefgh":
+            if i in newPosition:
+                format(newPosition,"-1")
+        format(newPosition)
         oldPosition = [self.coordinates[0], self.coordinates[1]]
         wasInSquare = self.board.squares[newPosition[0]][newPosition[1]]
         if not(newPosition in self.parentPiece.moves):
@@ -47,6 +51,19 @@ class Position:
                 self.coordinates = oldPosition
                 self.board.updateAll()
                 return "Failure is in check"
+
+        # moves rooks if castling
+        if type(self.parentPiece).__name__ == "King":
+            kingPos = format("e1" if self.parentPiece.color == "white" else "e8","-1")
+            if oldPosition[1] == kingPos[1] and not(self.parentPiece.hasMoved):
+                if newPosition[0] == kingPos[0]-2:
+                    self.board.squares[3][kingPos[1]] = self.board.squares[0][kingPos[1]]
+                    self.board.squares[0][kingPos[1]] = None
+                    self.board.squares[3][kingPos[1]].hasMoved = True
+                elif newPosition[0] == kingPos[0]+2:
+                    self.board.squares[5][kingPos[1]] = self.board.squares[7][kingPos[1]]
+                    self.board.squares[7][kingPos[1]] = None
+                    self.board.squares[5][kingPos[1]].hasMoved = True
         self.parentPiece.hasMoved = True
         self.board.updateAll()
         return "Success"
@@ -161,6 +178,8 @@ class King(Piece):
         moves = []
         currentCoords = self.position.coordinates
         relativeCoords = [1,0]
+
+        # check diagonal squares
         for _ in range(2):
             for _ in range(2):
                 moveAttempt = [currentCoords[0] + relativeCoords[0], currentCoords[1] + relativeCoords[1]]
@@ -172,6 +191,7 @@ class King(Piece):
                 relativeCoords[1] *= -1
             relativeCoords.reverse()
 
+        # check straight line squares
         relativeCoords = [1,1]
         for _ in range(2):
             for i in range(2):
@@ -184,6 +204,45 @@ class King(Piece):
                 moveAttempt[1] += relativeCoords[1]
             relativeCoords.reverse()
 
+        # check for castling
+
+        castling = [True, True] # Contains whether king can castle left and right respetively
+        # noCheck and noPiece means those squares cant have those things
+        noCheck = ["d1","f1"] if self.color == "white" else ["d8","f8"]
+        noPiece = ["b1","c1","d1","f1","g1"] if self.color == "white" else ["b8","c8","d8","f8","g8"]
+        rooks = ["a1","h1"] if self.color == "white" else ["a8","h8"]
+        if self.hasMoved: 
+            castling=[False,False]
+            return moves
+
+        # checks for castling through check
+        for column in range(len(self.board.squares)):
+            for square in self.board.squares[column]:
+                if square != None:
+                    for i in range(len(noCheck)):
+                        if format(noCheck[i], "-1") in square.moves and square.color !=self.color:
+                            castling[i] = False
+
+            # this loop uses indexes instead of object calls
+            # checks for castling through pieces
+            for i in range(len(noPiece)):
+                pos = format(noPiece[i], "-1")
+                if self.board.squares[pos[0]][pos[1]] != None:
+                    # if it is searching the left side and finds piece, make left castle not work and vise versa for the right
+                    if i < 3:
+                        castling[0] = False
+                    else: castling[1] = False
+            for i in range(len(rooks)):
+                pos = format(rooks[i],"-1")
+                piece = self.board.squares[pos[0]][pos[1]]
+                if type(piece).__name__ == "Rook" and not(piece.hasMoved) and piece.color == self.color:
+                    "Hooray!"
+                else:
+                    castling[i] = False
+        if castling[0] == True:
+            moves.append(format(noPiece[1],"-1"))
+        if castling[1] == True:
+            moves.append(format(noPiece[4],"-1"))
         return moves
 
 class Pawn(Piece):
@@ -243,16 +302,17 @@ class Board:
                     if type(square).__name__ == "King":
                         self.kings.append(square)
 
+
+        # handle checks
         for king in self.kings:
             king.is_in_check = False
-
         for column in range(len(self.squares)):
             for square in self.squares[column]:
                 if square != None:
                     for king in self.kings:
-                        if king.position.coordinates in square.moves:
-                            if king.color != square.color:
-                                king.is_in_check =True
+                        if king.color != square.color:
+                            if king.position.coordinates in square.moves:
+                                king.is_in_check = True
     def colorCheck(self, target):
         for i in target:
             if not(str(i) in "01234567"):
