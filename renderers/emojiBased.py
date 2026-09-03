@@ -37,3 +37,5 @@ def draw(board, orientation="white"):
     for i in "abcdefgh":
          xline = xline+ "    " + i
     print(xline)
+    for i in ["white","black"]:
+        print(f"Score {i}:", board.scores[i])

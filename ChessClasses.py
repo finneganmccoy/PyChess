@@ -35,6 +35,7 @@ class Position:
         for i in "abcdefgh":
             if i in newPosition:
                 format(newPosition,"-1")
+                break
         format(newPosition)
         oldPosition = [self.coordinates[0], self.coordinates[1]]
         wasInSquare = self.board.squares[newPosition[0]][newPosition[1]]
@@ -64,6 +65,20 @@ class Position:
                     self.board.squares[5][kingPos[1]] = self.board.squares[7][kingPos[1]]
                     self.board.squares[7][kingPos[1]] = None
                     self.board.squares[5][kingPos[1]].hasMoved = True
+        if wasInSquare != None:
+            self.board.scores[self.parentPiece.color] += wasInSquare.materialPoints
+            self.board.scores[self.parentPiece.color].append(wasInSquare)
+
+        if type(self.parentPiece).__name__ == "pawn":
+            # did the pawn move on the x axis?
+            if newPosition[0] != oldPosition[0]:
+                # did the pawn move to an empty square?
+                if wasInSquare == None:
+                    # clear the square behind the pawn and add points
+                    self.board.scores[self.parentPiece.color] += self.board.squares[newPosition[0]][oldPosition[1]].materialPoints
+                    self.board.scores[self.parentPiece.color].append(self.board.squares[newPosition[0]][oldPosition[1]])
+                    self.board.squares[newPosition[0]][oldPosition[1]] = None
+                    
         self.parentPiece.hasMoved = True
         self.board.updateAll()
         return "Success"
@@ -71,18 +86,17 @@ class Position:
 
 # this is the parent class for pieces
 class Piece:
-    def __init__(self, color, startSquare, board):
+    def __init__(self, color, startSquare, board, materialPoints):
         self.color = color
         self.board = board
         self.hasMoved = False
         self.position = Position(self, startSquare, self.board)
-        self.materialPoints = 0
+        self.materialPoints = materialPoints
         self.moves = []
 
 class Knight(Piece):
-    def __init__(self, color, startSquare, board):
-        super().__init__(color, startSquare, board)
-        self.materialPoints = 3
+    def __init__(self, color, startSquare, board, materialPoints=3):
+        super().__init__(color, startSquare, board, materialPoints)
         self.board.squares[startSquare[0]][startSquare[1]] = self
         self.board.squares[startSquare[0]][startSquare[1]] = self
     # all pieces need findMoves() to and a moves list. findMoves() will be different for every piece
@@ -103,9 +117,8 @@ class Knight(Piece):
         return moves
 
 class Bishop(Piece):
-    def __init__(self, color, startSquare, board):
-        super().__init__(color, startSquare, board)
-        self.materialPoints = 3
+    def __init__(self, color, startSquare, board, materialPoints=3):
+        super().__init__(color, startSquare, board, materialPoints)
         self.board.squares[startSquare[0]][startSquare[1]] = self
     def findMoves(self):
         moves = []
@@ -132,9 +145,8 @@ class Bishop(Piece):
         return moves
 
 class Rook(Piece):
-    def __init__(self, color, startSquare, board):
-        super().__init__(color, startSquare, board)
-        self.materialPoints = 5
+    def __init__(self, color, startSquare, board, materialPoints=5):
+        super().__init__(color, startSquare, board, materialPoints)
         self.board.squares[startSquare[0]][startSquare[1]] = self
     def findMoves(self):
         moves = []
@@ -158,9 +170,8 @@ class Rook(Piece):
         return moves
 
 class Queen(Piece):
-    def __init__(self, color, startSquare, board):
-        super().__init__(color, startSquare, board)
-        self.materialPoints = 5
+    def __init__(self, color, startSquare, board, materialPoints=9):
+        super().__init__(color, startSquare, board, materialPoints)
         self.board.squares[startSquare[0]][startSquare[1]] = self
     def findMoves(self):
         moves = Bishop.findMoves(self)
@@ -169,9 +180,8 @@ class Queen(Piece):
         return moves
 
 class King(Piece):
-    def __init__(self, color, startSquare, board):
-        super().__init__(color, startSquare, board)
-        self.materialPoints = 1
+    def __init__(self, color, startSquare, board, materialPoints=0):
+        super().__init__(color, startSquare, board, materialPoints)
         self.board.squares[startSquare[0]][startSquare[1]] = self
         self.is_in_check = False
     def findMoves(self):
@@ -246,9 +256,8 @@ class King(Piece):
         return moves
 
 class Pawn(Piece):
-    def __init__(self, color, startSquare, board):
-        super().__init__(color, startSquare, board)
-        self.materialPoints = 1
+    def __init__(self, color, startSquare, board, materialPoints=1):
+        super().__init__(color, startSquare, board, materialPoints)
         self.board.squares[startSquare[0]][startSquare[1]] = self
     def findMoves(self):
         moves = []
@@ -267,7 +276,6 @@ class Pawn(Piece):
             else:moveAttempt = [currentCoords[0], currentCoords[1]-2]
             if self.board.colorCheck(moveAttempt) == "Empty" and self.hasMoved == False and self.board.colorCheck(moveAttempt) != "Out of bounds":
                 moves.append(moveAttempt[:])
-
 
         if self.color == "white":
             moveAttempt[1] = currentCoords[1]+1
@@ -293,6 +301,14 @@ class Board:
             for o in range(8):
                 self.squares[i].append(None)
         self.kings = []
+        self.scores = {
+            "white": 0,
+            "black": 0
+        }
+        self.captures= {
+            "white": [],
+            "black": []
+        }
     def updateAll(self):
         self.kings = []
         for column in range(len(self.squares)):
