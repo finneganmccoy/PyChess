@@ -1,5 +1,5 @@
 '''This is where some classes are stored. Both the board and the pieces themselves should have a copy of their location
-TODO: redo format() to make it useful (and be able to input "a1" notation)'''
+TODO: moving twice makes the moves list give wierd values'''
 
 """
 FYI, it's convention to name classes with a capital letter at the start of each word, like this: "MyClass".
@@ -23,7 +23,6 @@ def format(coords: str, form="coordinates") -> list[int]:
     elif form=="notation":
         coords[0] = "abcdefgh"[coords[0]]
         coords[1] += 1
-    form = "coordinates"
     return coords
 
 class Position:
@@ -31,58 +30,6 @@ class Position:
         self.board = board
         self.coordinates = startSquare
         self.parentPiece = parent
-    def change(self, newPosition):
-        for i in "abcdefgh":
-            if i in newPosition:
-                format(newPosition,"-1")
-                break
-        format(newPosition)
-        oldPosition = [self.coordinates[0], self.coordinates[1]]
-        wasInSquare = self.board.squares[newPosition[0]][newPosition[1]]
-        if not(newPosition in self.parentPiece.moves):
-            return "Failure not in moves"
-        self.coordinates = newPosition
-        self.board.squares[oldPosition[0]][oldPosition[1]] = None
-        self.board.squares[newPosition[0]][newPosition[1]] = self.parentPiece
-        self.board.updateAll()
-        for i in self.board.kings:
-            if i.is_in_check == True and i.color == self.parentPiece.color:
-                self.board.squares[newPosition[0]][newPosition[1]] = wasInSquare
-                self.board.squares[oldPosition[0]][oldPosition[1]] = self.parentPiece
-                self.coordinates = oldPosition
-                self.board.updateAll()
-                return "Failure is in check"
-
-        # moves rooks if castling
-        if type(self.parentPiece).__name__ == "King":
-            kingPos = format("e1" if self.parentPiece.color == "white" else "e8","-1")
-            if oldPosition[1] == kingPos[1] and not(self.parentPiece.hasMoved):
-                if newPosition[0] == kingPos[0]-2:
-                    self.board.squares[3][kingPos[1]] = self.board.squares[0][kingPos[1]]
-                    self.board.squares[0][kingPos[1]] = None
-                    self.board.squares[3][kingPos[1]].hasMoved = True
-                elif newPosition[0] == kingPos[0]+2:
-                    self.board.squares[5][kingPos[1]] = self.board.squares[7][kingPos[1]]
-                    self.board.squares[7][kingPos[1]] = None
-                    self.board.squares[5][kingPos[1]].hasMoved = True
-        if wasInSquare != None:
-            self.board.scores[self.parentPiece.color] += wasInSquare.materialPoints
-            self.board.scores[self.parentPiece.color].append(wasInSquare)
-
-        if type(self.parentPiece).__name__ == "pawn":
-            # did the pawn move on the x axis?
-            if newPosition[0] != oldPosition[0]:
-                # did the pawn move to an empty square?
-                if wasInSquare == None:
-                    # clear the square behind the pawn and add points
-                    self.board.scores[self.parentPiece.color] += self.board.squares[newPosition[0]][oldPosition[1]].materialPoints
-                    self.board.scores[self.parentPiece.color].append(self.board.squares[newPosition[0]][oldPosition[1]])
-                    self.board.squares[newPosition[0]][oldPosition[1]] = None
-                    
-        self.parentPiece.hasMoved = True
-        self.board.updateAll()
-        return "Success"
-        # this function should also add scoreboard points to the capturing team
 
 # this is the parent class for pieces
 class Piece:
@@ -372,3 +319,61 @@ class Board:
         Knight("black", [6,7], self)
         Rook("black", [7,7], self)
         self.updateAll()
+
+    def move(self, oldPosition: list, newPosition: list)->str:
+        for i in "abcdefgh":
+            if i in oldPosition:
+                format(oldPosition, "-1")
+            if i in newPosition:
+                format(newPosition,"-1")
+
+        movingPiece = self.squares[oldPosition[0]][oldPosition[1]]
+        wasInSquare = self.squares[newPosition[0]][newPosition[1]]
+
+        if movingPiece == None:
+            return "Failure square is empty"
+        
+        if not(newPosition in movingPiece.moves):
+            return "Failure not in moves"
+        movingPiece.position.coordinates = newPosition
+        self.squares[oldPosition[0]][oldPosition[1]] = None
+        self.squares[newPosition[0]][newPosition[1]] = movingPiece
+        self.updateAll()
+        for king in self.kings:
+            if king.is_in_check == True and king.color == movingPiece.color:
+                self.squares[newPosition[0]][newPosition[1]] = wasInSquare
+                self.squares[oldPosition[0]][oldPosition[1]] = movingPiece
+                movingPiece.position.coordinates = oldPosition
+                self.updateAll()
+                return "Failure is in check"
+
+        # moves rooks if castling
+        if type(movingPiece).__name__ == "King":
+            if newPosition[0] == 2 and oldPosition[0] == 4:
+                self.squares[2][movingPiece.coordinates[1]] = self.squares[0][movingPiece.coordinates[1]]
+                self.squares[2][movingPiece.coordinates[1]].hasMoved = True
+                self.squares[0][movingPiece.coordinates[1]] = None
+            elif newPosition[0] == 6 and oldPosition[0] == 4:
+                self.squares[6][movingPiece.coordinates[1]] = self.squares[7][movingPiece.coordinates[1]]
+                self.squares[6][movingPiece.coordinates[1]].hasMoved = True
+                self.squares[7][movingPiece.coordinates[1]] = None
+                    
+        if wasInSquare != None:
+            self.scores[movingPiece.color] += wasInSquare.materialPoints
+            self.captures[movingPiece.color].append(wasInSquare)
+
+        if type(movingPiece).__name__ == "pawn":
+            # did the pawn move on the x axis?
+            if newPosition[0] != oldPosition[0]:
+                # did the pawn move to an empty square?
+                if wasInSquare == None:
+                    # clear the square behind the pawn and add points
+                    # that was in mattbatwings video very cool
+                    self.scores[movingPiece.color] += self.squares[newPosition[0]][oldPosition[1]].materialPoints
+                    self.captures[movingPiece.color].append(self.squares[newPosition[0]][oldPosition[1]])
+                    self.squares[newPosition[0]][oldPosition[1]] = None
+                    
+        movingPiece.hasMoved = True
+        self.updateAll()
+        return "Success"
+        # this function should also add scoreboard points to the capturing team
