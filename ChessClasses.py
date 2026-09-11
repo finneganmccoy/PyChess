@@ -1,5 +1,5 @@
 '''This is where some classes are stored. Both the board and the pieces themselves should have a copy of their location
-TODO: moving twice makes the moves list give wierd values'''
+TODO: add winnining'''
 
 """
 FYI, it's convention to name classes with a capital letter at the start of each word, like this: "MyClass".
@@ -25,21 +25,15 @@ def format(coords: str, form="coordinates") -> list[int]:
         coords[1] += 1
     return coords
 
-class Position:
-    def __init__(self, parent, startSquare, board):
-        self.board = board
-        self.coordinates = startSquare
-        self.parentPiece = parent
-
 # this is the parent class for pieces
 class Piece:
     def __init__(self, color, startSquare, board, materialPoints):
         self.color = color
         self.board = board
         self.hasMoved = False
-        self.position = Position(self, startSquare, self.board)
         self.materialPoints = materialPoints
         self.moves = []
+        self.coordinates = startSquare
 
 class Knight(Piece):
     def __init__(self, color, startSquare, board, materialPoints=3):
@@ -50,7 +44,7 @@ class Knight(Piece):
     def findMoves(self):
         moves = []
         relativeCoords = [2,1]
-        currentCoords = self.position.coordinates
+        currentCoords = self.coordinates
         moveAttempt = []
         for _ in range(2):
             for _ in range(2):
@@ -70,7 +64,7 @@ class Bishop(Piece):
     def findMoves(self):
         moves = []
         relativeCoords = [1,1]
-        currentCoords = self.position.coordinates
+        currentCoords = self.coordinates
         moveAttempt = []
         for _ in range(2):
             for i in range(2):
@@ -98,7 +92,7 @@ class Rook(Piece):
     def findMoves(self):
         moves = []
         relativeCoords = [1,0]
-        currentCoords = self.position.coordinates
+        currentCoords = self.coordinates
         moveAttempt = []
         for _ in range(2):
             for _ in range(2):
@@ -133,7 +127,7 @@ class King(Piece):
         self.is_in_check = False
     def findMoves(self):
         moves = []
-        currentCoords = self.position.coordinates
+        currentCoords = self.coordinates
         relativeCoords = [1,0]
 
         # check diagonal squares
@@ -208,7 +202,7 @@ class Pawn(Piece):
         self.board.squares[startSquare[0]][startSquare[1]] = self
     def findMoves(self):
         moves = []
-        currentCoords = self.position.coordinates
+        currentCoords = self.coordinates
 
         if self.color == "white":
             moveAttempt = [currentCoords[0], currentCoords[1]+1]
@@ -274,7 +268,7 @@ class Board:
                 if square != None:
                     for king in self.kings:
                         if king.color != square.color:
-                            if king.position.coordinates in square.moves:
+                            if king.coordinates in square.moves:
                                 king.is_in_check = True
     def colorCheck(self, target):
         for i in target:
@@ -324,8 +318,11 @@ class Board:
         for i in "abcdefgh":
             if i in oldPosition:
                 format(oldPosition, "-1")
+                break
+        for i in "abcdefgh":
             if i in newPosition:
                 format(newPosition,"-1")
+                break
 
         movingPiece = self.squares[oldPosition[0]][oldPosition[1]]
         wasInSquare = self.squares[newPosition[0]][newPosition[1]]
@@ -335,7 +332,7 @@ class Board:
         
         if not(newPosition in movingPiece.moves):
             return "Failure not in moves"
-        movingPiece.position.coordinates = newPosition
+        movingPiece.coordinates = newPosition
         self.squares[oldPosition[0]][oldPosition[1]] = None
         self.squares[newPosition[0]][newPosition[1]] = movingPiece
         self.updateAll()
@@ -343,19 +340,19 @@ class Board:
             if king.is_in_check == True and king.color == movingPiece.color:
                 self.squares[newPosition[0]][newPosition[1]] = wasInSquare
                 self.squares[oldPosition[0]][oldPosition[1]] = movingPiece
-                movingPiece.position.coordinates = oldPosition
+                movingPiece.coordinates = oldPosition
                 self.updateAll()
                 return "Failure is in check"
 
         # moves rooks if castling
         if type(movingPiece).__name__ == "King":
             if newPosition[0] == 2 and oldPosition[0] == 4:
-                self.squares[2][movingPiece.coordinates[1]] = self.squares[0][movingPiece.coordinates[1]]
-                self.squares[2][movingPiece.coordinates[1]].hasMoved = True
+                self.squares[3][movingPiece.coordinates[1]] = self.squares[0][movingPiece.coordinates[1]]
+                self.squares[3][movingPiece.coordinates[1]].hasMoved = True
                 self.squares[0][movingPiece.coordinates[1]] = None
             elif newPosition[0] == 6 and oldPosition[0] == 4:
-                self.squares[6][movingPiece.coordinates[1]] = self.squares[7][movingPiece.coordinates[1]]
-                self.squares[6][movingPiece.coordinates[1]].hasMoved = True
+                self.squares[5][movingPiece.coordinates[1]] = self.squares[7][movingPiece.coordinates[1]]
+                self.squares[5][movingPiece.coordinates[1]].hasMoved = True
                 self.squares[7][movingPiece.coordinates[1]] = None
                     
         if wasInSquare != None:

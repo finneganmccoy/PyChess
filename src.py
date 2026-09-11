@@ -58,6 +58,7 @@ def gameloop():
         command = input("command: ")
         if command.lower() == "setup":
             board.boardSetup()
+            turn = "white"
         else:
             try:
                 command = [format([command[0],command[1]] , "-1"), format([command[3],command[4]] , "-1")]
@@ -65,11 +66,7 @@ def gameloop():
                     moveStatus = board.move(command[0], command[1])
                     if moveStatus == "Success":
                         turn = "white" if turn == "black" else "black"
-                        print("TURN FLIPPED")
-                    else:
-                        print("It's not your turn!")
-                        print(moveStatus)
-            except BaseException:
+            except IndexError:
                 pass
             # use format>  b1 c3  < in order to make moves
         renderer.draw(board, turn)

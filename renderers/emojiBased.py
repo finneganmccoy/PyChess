@@ -39,3 +39,4 @@ def draw(board, orientation="white"):
     print(xline)
     for i in ["white","black"]:
         print(f"Score {i}:", board.scores[i])
+    print(f"Turn: " + orientation[0].upper() + orientation[1:])
