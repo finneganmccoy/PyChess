@@ -35,6 +35,37 @@ class Piece:
         self.moves = []
         self.coordinates = startSquare
 
+    def move(self, newPosition: list)->str:
+        for i in "abcdefgh":
+            if i in newPosition:
+                format(newPosition,"-1")
+                break
+        oldPosition = self.coordinates
+        wasInSquare = self.board.squares[newPosition[0]][newPosition[1]]
+
+        if not(newPosition in self.moves):
+            return "Failure not in moves"
+        self.coordinates = newPosition
+        self.board.squares[oldPosition[0]][oldPosition[1]] = None
+        self.board.squares[newPosition[0]][newPosition[1]] = self
+        self.board.updateAll()
+        for king in self.board.kings:
+            if king.is_in_check == True and king.color == self.color:
+                self.board.squares[newPosition[0]][newPosition[1]] = wasInSquare
+                self.board.squares[oldPosition[0]][oldPosition[1]] = self
+                self.coordinates = oldPosition
+                self.board.updateAll()
+                return "Failure is in check"
+
+                  
+        if wasInSquare != None:
+            self.board.scores[self.color] += wasInSquare.materialPoints
+            self.board.captures[self.color].append(wasInSquare)
+                    
+        self.hasMoved = True
+        self.board.updateAll()
+        return "Success"
+
 class Knight(Piece):
     def __init__(self, color, startSquare, board, materialPoints=3):
         super().__init__(color, startSquare, board, materialPoints)
@@ -196,6 +227,27 @@ class King(Piece):
             moves.append(format(noPiece[4],"-1"))
         return moves
 
+    def move(self, newPosition: list)->str:
+        for i in "abcdefgh":
+            if i in newPosition:
+                format(newPosition,"-1")
+                break
+        oldPosition = self.coordinates
+
+        moveStatus = super().move(newPosition)
+        if moveStatus == "Success":
+            # moves rooks if castling
+            if newPosition[0] == 2 and oldPosition[0] == 4:
+                self.board.squares[3][self.coordinates[1]] = self.board.squares[0][self.coordinates[1]]
+                self.board.squares[3][self.coordinates[1]].hasMoved = True
+                self.board.squares[0][self.coordinates[1]] = None
+            elif newPosition[0] == 6 and oldPosition[0] == 4:
+                self.board.squares[5][self.coordinates[1]] = self.board.squares[7][self.coordinates[1]]
+                self.board.squares[5][self.coordinates[1]].hasMoved = True
+                self.board.squares[7][self.coordinates[1]] = None
+        return moveStatus
+  
+
 class Pawn(Piece):
     def __init__(self, color, startSquare, board, materialPoints=1):
         super().__init__(color, startSquare, board, materialPoints)
@@ -232,6 +284,27 @@ class Pawn(Piece):
             moves.append(moveAttempt[:])
         
         return moves
+
+    def move(self, newPosition: list)->str:
+        for i in "abcdefgh":
+            if i in newPosition:
+                format(newPosition,"-1")
+                break
+        oldPosition = self.coordinates
+        wasInSquare = self.board.squares[newPosition[0]][newPosition[1]]
+
+        moveStatus = super().move(newPosition)
+        if moveStatus == "Success":
+            # did the pawn move on the x axis?
+            if newPosition[0] != oldPosition[0]:
+                # did the pawn move to an empty square?
+                if wasInSquare == None:
+                    # clear the square behind the pawn and add points
+                    # that was in mattbatwings video very cool
+                    self.board.scores[self.color] += self.board.squares[newPosition[0]][oldPosition[1]].materialPoints
+                    self.board.captures[self.color].append(self.board.squares[newPosition[0]][oldPosition[1]])
+                    self.board.squares[newPosition[0]][oldPosition[1]] = None
+        return moveStatus
         
 
 class Board:
@@ -278,14 +351,6 @@ class Board:
             return "Empty"
         else:
             return self.squares[target[0]][target[1]].color
-    def typeCheck(self, target):
-        for i in target:
-            if not(str(i) in "01234567"):
-                return "Out of bounds"
-        if self.squares[target[0]][target[1]] != None:
-            return type(self.squares[target[0]][target[1]]).__name__
-        else:
-            return "Empty"
 
     def boardSetup(self):
         self.__init__()
@@ -313,64 +378,8 @@ class Board:
         Knight("black", [6,7], self)
         Rook("black", [7,7], self)
         self.updateAll()
-
-    def move(self, oldPosition: list, newPosition: list)->str:
-        for i in "abcdefgh":
-            if i in oldPosition:
-                format(oldPosition, "-1")
-                break
-        for i in "abcdefgh":
-            if i in newPosition:
-                format(newPosition,"-1")
-                break
-
-        movingPiece = self.squares[oldPosition[0]][oldPosition[1]]
-        wasInSquare = self.squares[newPosition[0]][newPosition[1]]
-
-        if movingPiece == None:
-            return "Failure square is empty"
-        
-        if not(newPosition in movingPiece.moves):
-            return "Failure not in moves"
-        movingPiece.coordinates = newPosition
-        self.squares[oldPosition[0]][oldPosition[1]] = None
-        self.squares[newPosition[0]][newPosition[1]] = movingPiece
-        self.updateAll()
-        for king in self.kings:
-            if king.is_in_check == True and king.color == movingPiece.color:
-                self.squares[newPosition[0]][newPosition[1]] = wasInSquare
-                self.squares[oldPosition[0]][oldPosition[1]] = movingPiece
-                movingPiece.coordinates = oldPosition
-                self.updateAll()
-                return "Failure is in check"
-
-        # moves rooks if castling
-        if type(movingPiece).__name__ == "King":
-            if newPosition[0] == 2 and oldPosition[0] == 4:
-                self.squares[3][movingPiece.coordinates[1]] = self.squares[0][movingPiece.coordinates[1]]
-                self.squares[3][movingPiece.coordinates[1]].hasMoved = True
-                self.squares[0][movingPiece.coordinates[1]] = None
-            elif newPosition[0] == 6 and oldPosition[0] == 4:
-                self.squares[5][movingPiece.coordinates[1]] = self.squares[7][movingPiece.coordinates[1]]
-                self.squares[5][movingPiece.coordinates[1]].hasMoved = True
-                self.squares[7][movingPiece.coordinates[1]] = None
-                    
-        if wasInSquare != None:
-            self.scores[movingPiece.color] += wasInSquare.materialPoints
-            self.captures[movingPiece.color].append(wasInSquare)
-
-        if type(movingPiece).__name__ == "pawn":
-            # did the pawn move on the x axis?
-            if newPosition[0] != oldPosition[0]:
-                # did the pawn move to an empty square?
-                if wasInSquare == None:
-                    # clear the square behind the pawn and add points
-                    # that was in mattbatwings video very cool
-                    self.scores[movingPiece.color] += self.squares[newPosition[0]][oldPosition[1]].materialPoints
-                    self.captures[movingPiece.color].append(self.squares[newPosition[0]][oldPosition[1]])
-                    self.squares[newPosition[0]][oldPosition[1]] = None
-                    
-        movingPiece.hasMoved = True
-        self.updateAll()
-        return "Success"
-        # this function should also add scoreboard points to the capturing team
+    
+    # def detect_win(self):
+    #     self.updateAll()
+    #     for king in self.kings:
+    #         if king.moves == []:

@@ -63,7 +63,7 @@ def gameloop():
             try:
                 command = [format([command[0],command[1]] , "-1"), format([command[3],command[4]] , "-1")]
                 if board.colorCheck(command[0]) == turn:
-                    moveStatus = board.move(command[0], command[1])
+                    moveStatus = board.squares[command[0][0]][command[0][1]].move(command[1])
                     if moveStatus == "Success":
                         turn = "white" if turn == "black" else "black"
             except IndexError:
