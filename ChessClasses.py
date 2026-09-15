@@ -1,5 +1,5 @@
 '''This is where some classes are stored. Both the board and the pieces themselves should have a copy of their location
-TODO: add winnining'''
+TODO: add winnining ;; add helper function to find if there is a check or smth else and return it for easier win detection'''
 
 """
 FYI, it's convention to name classes with a capital letter at the start of each word, like this: "MyClass".
@@ -35,6 +35,30 @@ class Piece:
         self.moves = []
         self.coordinates = startSquare
 
+    def try_move(self, newPosition):
+        for i in "abcdefgh":
+            if i in newPosition:
+                format(newPosition,"-1")
+                break
+        oldPosition = self.coordinates
+        wasInSquare = self.board.squares[newPosition[0]][newPosition[1]]
+        if not(newPosition in self.moves):
+            return "Failure not in moves"
+        self.coordinates = newPosition
+        self.board.squares[oldPosition[0]][oldPosition[1]] = None
+        self.board.squares[newPosition[0]][newPosition[1]] = self
+        self.board.updateAll()
+
+        moveStatus = "Success"
+        for king in self.board.kings:
+            if king.is_in_check == True and king.color == self.color:
+                moveStatus = "Failure is in check"
+        self.board.squares[newPosition[0]][newPosition[1]] = wasInSquare
+        self.board.squares[oldPosition[0]][oldPosition[1]] = self
+        self.coordinates = oldPosition
+        self.board.updateAll()
+        return moveStatus
+
     def move(self, newPosition: list)->str:
         for i in "abcdefgh":
             if i in newPosition:
@@ -43,28 +67,22 @@ class Piece:
         oldPosition = self.coordinates
         wasInSquare = self.board.squares[newPosition[0]][newPosition[1]]
 
-        if not(newPosition in self.moves):
-            return "Failure not in moves"
+        moveStatus = self.try_move(newPosition)
+        if moveStatus != "Success":
+            return moveStatus
+
         self.coordinates = newPosition
         self.board.squares[oldPosition[0]][oldPosition[1]] = None
         self.board.squares[newPosition[0]][newPosition[1]] = self
         self.board.updateAll()
-        for king in self.board.kings:
-            if king.is_in_check == True and king.color == self.color:
-                self.board.squares[newPosition[0]][newPosition[1]] = wasInSquare
-                self.board.squares[oldPosition[0]][oldPosition[1]] = self
-                self.coordinates = oldPosition
-                self.board.updateAll()
-                return "Failure is in check"
 
-                  
         if wasInSquare != None:
             self.board.scores[self.color] += wasInSquare.materialPoints
             self.board.captures[self.color].append(wasInSquare)
-                    
+            
         self.hasMoved = True
         self.board.updateAll()
-        return "Success"
+        return moveStatus
 
 class Knight(Piece):
     def __init__(self, color, startSquare, board, materialPoints=3):
@@ -305,7 +323,7 @@ class Pawn(Piece):
                     self.board.captures[self.color].append(self.board.squares[newPosition[0]][oldPosition[1]])
                     self.board.squares[newPosition[0]][oldPosition[1]] = None
         return moveStatus
-        
+
 
 class Board:
     def __init__(self):
@@ -332,7 +350,6 @@ class Board:
                     if type(square).__name__ == "King":
                         self.kings.append(square)
 
-
         # handle checks
         for king in self.kings:
             king.is_in_check = False
@@ -343,6 +360,7 @@ class Board:
                         if king.color != square.color:
                             if king.coordinates in square.moves:
                                 king.is_in_check = True
+
     def colorCheck(self, target):
         for i in target:
             if not(str(i) in "01234567"):
@@ -379,7 +397,27 @@ class Board:
         Rook("black", [7,7], self)
         self.updateAll()
     
-    # def detect_win(self):
-    #     self.updateAll()
-    #     for king in self.kings:
-    #         if king.moves == []:
+    def detect_state(self):
+        can_move = {
+            "white": False,
+            "black": False
+        }
+
+        for column in range(len(self.squares)):
+            for square in self.squares[column]:
+                if square != None:
+                    if can_move[square.color] != True:
+                        for move in square.moves:
+                            if square.try_move(move) == "Success":
+                                can_move[square.color] = True
+
+        for color in can_move:
+            if can_move[color] == False:
+                for king in self.kings:
+                    if color == king.color:
+                        if king.is_in_check:
+                            self.gamestate = color[0]+"checkmate"
+                        else:
+                            self.gamestate = color[0]+"stalemate"
+        
+        self.gamestate = "playing"
