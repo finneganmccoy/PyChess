@@ -5,4 +5,5 @@ The goal of this project is to explore how various methods of rendering/displayi
 ## TODO
  * implement the Underlying Chess Engine
  * Think of other things to Add
+ * We need to use branches more often
  * other Stuff
