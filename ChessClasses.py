@@ -34,7 +34,7 @@ class Piece:
         self.materialPoints = materialPoints
         self.moves = []
         self.coordinates = startSquare
-
+        self.board.squares[startSquare[0]][startSquare[1]] = self
     def try_move(self, newPosition):
         for i in "abcdefgh":
             if i in newPosition:
@@ -51,7 +51,7 @@ class Piece:
 
         moveStatus = "Success"
         for king in self.board.kings:
-            if king.is_in_check == True and king.color == self.color:
+            if king.is_in_check() == True and king.color == self.color:
                 moveStatus = "Failure is in check"
         self.board.squares[newPosition[0]][newPosition[1]] = wasInSquare
         self.board.squares[oldPosition[0]][oldPosition[1]] = self
@@ -87,9 +87,6 @@ class Piece:
 class Knight(Piece):
     def __init__(self, color, startSquare, board, materialPoints=3):
         super().__init__(color, startSquare, board, materialPoints)
-        self.board.squares[startSquare[0]][startSquare[1]] = self
-        self.board.squares[startSquare[0]][startSquare[1]] = self
-    # all pieces need findMoves() to and a moves list. findMoves() will be different for every piece
     def findMoves(self):
         moves = []
         relativeCoords = [2,1]
@@ -109,7 +106,6 @@ class Knight(Piece):
 class Bishop(Piece):
     def __init__(self, color, startSquare, board, materialPoints=3):
         super().__init__(color, startSquare, board, materialPoints)
-        self.board.squares[startSquare[0]][startSquare[1]] = self
     def findMoves(self):
         moves = []
         relativeCoords = [1,1]
@@ -137,7 +133,6 @@ class Bishop(Piece):
 class Rook(Piece):
     def __init__(self, color, startSquare, board, materialPoints=5):
         super().__init__(color, startSquare, board, materialPoints)
-        self.board.squares[startSquare[0]][startSquare[1]] = self
     def findMoves(self):
         moves = []
         relativeCoords = [1,0]
@@ -162,7 +157,6 @@ class Rook(Piece):
 class Queen(Piece):
     def __init__(self, color, startSquare, board, materialPoints=9):
         super().__init__(color, startSquare, board, materialPoints)
-        self.board.squares[startSquare[0]][startSquare[1]] = self
     def findMoves(self):
         moves = Bishop.findMoves(self)
         for i in Rook.findMoves(self):
@@ -172,8 +166,7 @@ class Queen(Piece):
 class King(Piece):
     def __init__(self, color, startSquare, board, materialPoints=0):
         super().__init__(color, startSquare, board, materialPoints)
-        self.board.squares[startSquare[0]][startSquare[1]] = self
-        self.is_in_check = False
+
     def findMoves(self):
         moves = []
         currentCoords = self.coordinates
@@ -264,12 +257,19 @@ class King(Piece):
                 self.board.squares[5][self.coordinates[1]].hasMoved = True
                 self.board.squares[7][self.coordinates[1]] = None
         return moveStatus
-  
+
+    def is_in_check(self):
+        for column in range(len(self.board.squares)):
+            for square in self.board.squares[column]:
+                if square != None:
+                    if self.coordinates in square.moves:
+                        return True
+        return False
 
 class Pawn(Piece):
     def __init__(self, color, startSquare, board, materialPoints=1):
         super().__init__(color, startSquare, board, materialPoints)
-        self.board.squares[startSquare[0]][startSquare[1]] = self
+
     def findMoves(self):
         moves = []
         currentCoords = self.coordinates
@@ -324,7 +324,6 @@ class Pawn(Piece):
                     self.board.squares[newPosition[0]][oldPosition[1]] = None
         return moveStatus
 
-
 class Board:
     def __init__(self):
         self.squares = []
@@ -350,17 +349,6 @@ class Board:
                     if type(square).__name__ == "King":
                         self.kings.append(square)
 
-        # handle checks
-        for king in self.kings:
-            king.is_in_check = False
-        for column in range(len(self.squares)):
-            for square in self.squares[column]:
-                if square != None:
-                    for king in self.kings:
-                        if king.color != square.color:
-                            if king.coordinates in square.moves:
-                                king.is_in_check = True
-
     def colorCheck(self, target):
         for i in target:
             if not(str(i) in "01234567"):
@@ -370,7 +358,7 @@ class Board:
         else:
             return self.squares[target[0]][target[1]].color
 
-    def boardSetup(self):
+    def setup(self):
         self.__init__()
         # setup white
         for i in range(8):
@@ -397,27 +385,25 @@ class Board:
         Rook("black", [7,7], self)
         self.updateAll()
     
-    def detect_state(self):
-        can_move = {
-            "white": False,
-            "black": False
-        }
+    def detect_win(self, color: str)->str:
+        color = color
+        op_can_move = False
 
         for column in range(len(self.squares)):
             for square in self.squares[column]:
                 if square != None:
-                    if can_move[square.color] != True:
+                    if square.color != color:
                         for move in square.moves:
                             if square.try_move(move) == "Success":
-                                can_move[square.color] = True
+                                op_can_move = True
+                                break
 
-        for color in can_move:
-            if can_move[color] == False:
-                for king in self.kings:
-                    if color == king.color:
-                        if king.is_in_check:
-                            self.gamestate = color[0]+"checkmate"
-                        else:
-                            self.gamestate = color[0]+"stalemate"
+        if not(op_can_move):
+            for king in self.kings:
+                if king.color != color:
+                    if king.is_in_check():
+                        return "checkmate"
+                    else:
+                        return "stalemate"
         
-        self.gamestate = "playing"
+        return "playing"

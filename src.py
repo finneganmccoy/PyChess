@@ -50,14 +50,14 @@ def startup():
 def gameloop():
     turn = "white"
     board = Board()
-    board.boardSetup()
+    board.setup()
     renderer.draw(board)
     running = True
 
     while running:
         command = input("command: ")
         if command.lower() == "setup":
-            board.boardSetup()
+            board.setup()
             turn = "white"
         else:
             try:
@@ -65,6 +65,7 @@ def gameloop():
                 if board.colorCheck(command[0]) == turn:
                     moveStatus = board.squares[command[0][0]][command[0][1]].move(command[1])
                     if moveStatus == "Success":
+                        print(board.detect_win(turn))
                         turn = "white" if turn == "black" else "black"
             except IndexError:
                 pass
